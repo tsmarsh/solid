@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>solid</title>
+<meta name="description" content="Write a short solid-geometry program on the left, see the solid on the right. Runs entirely in your browser.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="masthead">
+  <h1 class="masthead-title">solid</h1>
+  <p class="masthead-note">Describe a solid; the booleans run in this page, in fibber, compiled to JavaScript.</p>
+</header>
+
+<main class="workbench">
+  <section class="editor-pane" aria-labelledby="editor-heading">
+    <div class="pane-head">
+      <h2 class="pane-title" id="editor-heading">Program</h2>
+      <div class="example-picker">
+        <label class="field-label" for="example-select">Example</label>
+        <select id="example-select" class="example-select"></select>
+      </div>
+    </div>
+    <label class="visually-hidden" for="program">Program text</label>
+    <textarea id="program" class="program" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="program-help problem" rows="16"></textarea>
+    <p class="help" id="program-help">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> (<kbd>&#8984;</kbd>+<kbd>Enter</kbd>) to render. Units are free; angles are degrees; z points up.
+      <a href="#language">The language</a>.</p>
+    <div class="actions">
+      <button type="button" id="render-button" class="button button-primary">Render</button>
+      <button type="button" id="cancel-button" class="button" hidden>Cancel</button>
+      <label class="auto-render"><input type="checkbox" id="auto-render" checked> Render when I pause typing</label>
+    </div>
+    <div id="problem" class="problem" hidden>
+      <p class="problem-text"><span class="problem-place" id="problem-place"></span> <span id="problem-message"></span></p>
+      <button type="button" id="goto-problem" class="button button-quiet">Show in the program</button>
+    </div>
+  </section>
+
+  <section class="result-pane" aria-labelledby="result-heading" id="result-pane">
+    <div class="pane-head">
+      <h2 class="pane-title" id="result-heading">Solid</h2>
+      <div class="view-tools">
+        <button type="button" id="reset-view" class="button button-quiet">Reset view</button>
+        <button type="button" id="download-stl" class="button" disabled>Download STL</button>
+      </div>
+    </div>
+    <div class="viewer-frame">
+      <canvas id="viewer" class="viewer" tabindex="0" role="img" aria-label="Rendering of the solid" aria-describedby="viewer-help"></canvas>
+      <p class="viewer-stale" id="viewer-stale" hidden>The last solid that rendered, shown dimmed.</p>
+      <p class="viewer-busy" id="viewer-busy" hidden>Rendering&hellip; <span id="busy-elapsed">0.0</span>&nbsp;s</p>
+    </div>
+    <p class="help" id="viewer-help">Drag to turn, Shift-drag or right-drag to move, wheel or pinch to zoom. With the view focused: arrows turn, Shift+arrows move, <kbd>+</kbd> <kbd>&minus;</kbd> zoom, <kbd>0</kbd> resets.</p>
+    <p class="status" id="status" role="status" aria-live="polite">Loading the geometry library&hellip;</p>
+    <dl class="metrics" id="metrics" aria-label="Measurements of the solid">
+      <div class="metric"><dt>Volume</dt><dd id="m-volume">&ndash;</dd></div>
+      <div class="metric"><dt>Surface area</dt><dd id="m-area">&ndash;</dd></div>
+      <div class="metric"><dt>Bounding box</dt><dd id="m-bbox">&ndash;</dd></div>
+      <div class="metric"><dt>Valid manifold</dt><dd id="m-manifold">&ndash;</dd></div>
+      <div class="metric"><dt>Mesh</dt><dd id="m-mesh">&ndash;</dd></div>
+      <div class="metric"><dt>Time</dt><dd id="m-time">&ndash;</dd></div>
+    </dl>
+  </section>
+</main>
+
+<section class="language" id="language" aria-labelledby="language-heading">
+  <h2 class="pane-title" id="language-heading">The language</h2>
+  <p>A program is a few <code>(def name value)</code> lines and then one solid. Everything is a list: the first word is the operation. Comments start with <code>;</code>. Nothing else can run: there is no file access and no loop except <code>repeat</code>.</p>
+  <table class="reference">
+    <caption class="visually-hidden">Operations</caption>
+    <thead><tr><th scope="col">Form</th><th scope="col">Makes</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><code>(cube x y z)</code> <code>(cube-centered x y z)</code></th><td>a box from the origin, or centred on it</td></tr>
+      <tr><th scope="row"><code>(sphere r [level])</code></th><td>a sphere of 8&middot;4<sup>level</sup> faces (level 0 to 5, default 3)</td></tr>
+      <tr><th scope="row"><code>(cylinder h r [r2] [segments])</code></th><td>a cylinder, cone (r2 = 0) or frustum on the z axis (3 to 128 segments)</td></tr>
+      <tr><th scope="row"><code>(polygon x y, x y, ...)</code></th><td>an outline; either winding; may not cross itself</td></tr>
+      <tr><th scope="row"><code>(extrude h outline hole...)</code></th><td>the outline lifted by h, with holes cut</td></tr>
+      <tr><th scope="row"><code>(revolve segments profile)</code></th><td>a profile (x = radius, y = height) turned about the z axis</td></tr>
+      <tr><th scope="row"><code>(translate x y z s)</code> <code>(scale x y z s)</code> <code>(rotate x y z s)</code> <code>(mirror nx ny nz s)</code></th><td>a moved, stretched, turned (degrees, about x then y then z) or mirrored solid</td></tr>
+      <tr><th scope="row"><code>(union a b ...)</code> <code>(difference a b ...)</code> <code>(intersection a b ...)</code></th><td>the booleans, taken from left to right</td></tr>
+      <tr><th scope="row"><code>(repeat i n body)</code></th><td>the union of body for i = 0 &hellip; n&minus;1</td></tr>
+      <tr><th scope="row"><code>(let name value body)</code> <code>(def name value)</code></th><td>names; numbers use <code>+ - * / min max abs sqrt sin cos pi</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer class="colophon">
+  <p>Limits: 8000 characters, 24000 faces per boolean, 20000 evaluation steps, 45 seconds per render. This is the built demo of a solid-modelling library written in fibber; the library's source is not published yet.</p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
