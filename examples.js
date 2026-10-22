@@ -130,7 +130,7 @@ export const examples = [
 (def prism (extrude 3 (polygon 2 0, 1 1.732, -1 1.732, -2 0, -1 -1.732, 1 -1.732)))
 (fillet prism (edges-where prism (and (on-top) (near 2 0 3 0.1))) 0.5)
 ` },
-  { id: 'fillet-box-all', slow: true, title: 'Fillet: a box with every edge rounded', program:
+  { id: 'fillet-box-all', title: 'Fillet: a box with every edge rounded', program:
 `; all twelve edges: at each corner the three fillets meet in a sphere octant (the ball that rolls along the edges)
 (def box (cube 30 20 10))
 (fillet box (edges-where box (and)) 3 8)
@@ -168,7 +168,7 @@ export const examples = [
 (def path (join (polyline 0 0 0, 0 0 12) (bezier 0 0 0, 0 0 10, 12 0 10, 12 0 20 20)))
 (sweep path outer bore)
 ` },
-  { id: 'bolt', slow: true, title: 'Threads: a bolt and its nut', program:
+  { id: 'bolt', title: 'Threads: a bolt and its nut', program:
 `; an M8x1.25 hex bolt (ISO metric thread, 16 segments a turn) with its nut at the stated clearance of 0.15: two separate pieces, 0.15 apart everywhere.
 ; The thread is absolute in z, so a nut set a whole number of pitches (5 x 1.25) up the bolt meshes with it.
 (def bolt (screw-hex 8 1.25 13 5.3 4 14 16))
@@ -201,7 +201,7 @@ export const examples = [
 (sweep (helix-axial 3 4 24)
   (polygon 3 0, 5 0, 5 1.5, 3 1.5))
 ` },
-  { id: 'cap-screw', slow: true, title: 'Threads: a cylinder-head screw', program:
+  { id: 'cap-screw', title: 'Threads: a cylinder-head screw', program:
 `; screw-cylinder diameter pitch head-diameter head-height shank-length thread-length segments; the ISO metric basic profile, M6 x 1
 (screw-cylinder 6 1 10 6 4 12 20)
 ` },

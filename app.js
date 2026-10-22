@@ -14,12 +14,14 @@ const el = {
 const nf = new Intl.NumberFormat('en', { maximumSignificantDigits: 6 });
 const fmt = (x) => nf.format(x);
 const BASE_TITLE = 'solid';
+// ?engine=js runs the JavaScript build, ?engine=wasm refuses to fall back to it; anything else lets the worker choose (WebAssembly when it can). For the tests and for comparing.
+const ENGINE = ['js', 'wasm'].includes(new URLSearchParams(location.search).get('engine')) ? new URLSearchParams(location.search).get('engine') : 'auto';
 
 const viewer = new Viewer(el.canvas);
 let current = null;      // the running render: { handle, started, ticker }
 let latest = null;       // the last successful result
 let lastProblem = null;  // { line, col } of the shown error
-let debounce = 0, serial = 0, firstResult = true;
+let debounce = 0, serial = 0, firstResult = true, lastEngine = null;   // lastEngine: which engine answered last, even with an error (for the tests)
 
 const store = {
   get() { try { return localStorage.getItem('solid-demo-program'); } catch { return null; } },
@@ -81,7 +83,7 @@ async function run() {
   const mine = ++serial, src = el.program.value, started = performance.now();
   store.set(src);
   el.elapsed.textContent = '0.0';
-  const handle = startRender(src);
+  const handle = startRender(src, { engine: ENGINE });
   current = { handle, started, ticker: setInterval(() => { el.elapsed.textContent = ((performance.now() - started) / 1000).toFixed(1); }, 100) };
   setBusy(true);
   setStatus('Rendering…');
@@ -90,6 +92,7 @@ async function run() {
     const r = await handle.promise;
     if (mine !== serial) return;
     finish(mine);
+    lastEngine = r.engine;
     const ms = performance.now() - started;
     if (!r.ok) {
       markStale();
@@ -107,7 +110,7 @@ async function run() {
     firstResult = false;
     el.download.disabled = r.faces === 0;
     const manifold = r.faces === 0 ? 'The result is empty.' : r.manifold ? 'Valid manifold.' : 'Not a valid manifold.';
-    setStatus(`Rendered ${r.faces} faces in ${ms < 1000 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(1) + ' s'}. Volume ${fmt(r.volume)}, surface area ${fmt(r.area)}. ${manifold}`, 'ok');
+    setStatus(`Rendered ${r.faces} faces in ${ms < 1000 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(1) + ' s'} (${r.engine}). Volume ${fmt(r.volume)}, surface area ${fmt(r.area)}. ${manifold}`, 'ok');
     setTitle(r.faces ? `Volume ${fmt(r.volume)}` : 'Empty');
   } catch (e) {
     if (mine !== serial || e.kind === 'cancelled') { if (e.kind === 'cancelled' && mine === serial) { finish(mine); setStatus('Cancelled.'); setTitle(''); } return; }
@@ -141,7 +144,7 @@ function loadExample(id, { focus }) {
 }
 
 // ---- wiring
-for (const ex of examples) el.select.append(new Option(ex.slow || ex.kind === 'slow' ? ex.title + ' (slow)' : ex.title, ex.id));
+for (const ex of examples) el.select.append(new Option(ex.slow ? ex.title + ' (slow)' : ex.title, ex.id));
 el.select.insertBefore(new Option('Your own program', ''), el.select.firstChild);
 el.select.addEventListener('change', () => { if (el.select.value) loadExample(el.select.value, { focus: true }); });
 el.program.addEventListener('input', () => { el.select.value = ''; schedule(); });
@@ -173,4 +176,4 @@ const saved = store.get();
 if (saved && saved.trim()) { el.program.value = saved; el.select.value = ''; run(); }
 else { el.select.value = examples[0].id; loadExample(examples[0].id, { focus: false }); }
 // exposed for the test script only
-window.__demo = { run, viewer, get latest() { return latest; } };
+window.__demo = { run, viewer, get latest() { return latest; }, get engine() { return lastEngine; } };
