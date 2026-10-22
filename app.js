@@ -141,7 +141,7 @@ function loadExample(id, { focus }) {
 }
 
 // ---- wiring
-for (const ex of examples) el.select.append(new Option(ex.title, ex.id));
+for (const ex of examples) el.select.append(new Option(ex.slow || ex.kind === 'slow' ? ex.title + ' (slow)' : ex.title, ex.id));
 el.select.insertBefore(new Option('Your own program', ''), el.select.firstChild);
 el.select.addEventListener('change', () => { if (el.select.value) loadExample(el.select.value, { focus: true }); });
 el.program.addEventListener('input', () => { el.select.value = ''; schedule(); });

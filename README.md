@@ -11,7 +11,7 @@ This repository is the built page only (`solid.mjs` is generated code). The libr
 ## What to expect
 - A program is a small s-expression language: a whitelist of operations, `def`, `let` and `repeat`, no input or output. Errors point to a line and column. The page has thirteen examples, including one slow one and three that fail on purpose.
 - It is an experimenting tool, not an engineering one. Inputs must be closed manifolds; the operations return an error rather than a wrong mesh when they can tell. A few unusual scenes (a first operand that crosses itself at every perturbation the library tries) still come back as an error.
-- The compiled JavaScript runs about 2.5 times slower than the native library, on one thread.
+- The compiled JavaScript is much slower than the native library (the bolt example: about 10 s in the browser build against about 0.5 s as a native binary, on the author's machine, because fibber's JavaScript backend emulates a 64-bit machine; a faster backend is possible and not built yet) and runs on one thread. Examples marked "(slow)" take seconds on a laptop and longer on a phone.
 - Only Chromium has been tested (with software WebGL). Firefox, Safari, phones and real touch input have not.
 
 BSD 3-Clause licence; see `LICENSE`.
